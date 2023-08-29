@@ -30,6 +30,14 @@ public protocol MessagesDataSource: AnyObject {
 
     /// The `SenderType` of new messages in the `MessagesCollectionView`.
     func currentSender() -> SenderType
+    
+    func isPreviousMessageSameSender(at indexPath: IndexPath) -> Bool
+    
+    func isNextMessageSameSender(at indexPath: IndexPath) -> Bool
+    
+    func isLastMessage(at indexPath: IndexPath) -> Bool
+    
+    func isFirstMessage(at indexPath: IndexPath) -> Bool
 
     /// A helper method to determine if a given message is from the current `SenderType`.
     ///
