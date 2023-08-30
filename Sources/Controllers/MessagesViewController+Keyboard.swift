@@ -94,45 +94,7 @@ internal extension MessagesViewController {
         // to simply check whether the current keyboard frame, whatever it is (even when undocked), covers the bottom of the collection
         // view.
         guard let keyboardEndFrameInScreenCoords = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-        handleKeyboardChangeNew(keyboardEndFrameInScreenCoords)
-    }
-    
-    static var originContentOffset: CGPoint = .zero
-    
-    private func handleKeyboardChangeNew(_ keyboardFrame: CGRect) {
-        let keyboardEndFrame = view.convert(keyboardFrame, from: self.view)
-        var lastCellFrame = CGRect.zero
-        if let lastIndexPath = self.messagesCollectionView.indexPathsForVisibleItems.last {
-            if let lastCell = self.messagesCollectionView.cellForItem(at: lastIndexPath) {
-                lastCellFrame = lastCell.convert(lastCell.bounds, to: self.view)
-            }
-        }
-        
-        let intersection = lastCellFrame.intersection(keyboardEndFrame)
-        var offset: CGFloat = 0
-        if intersection.isNull {
-            // The keyboard is hidden, is a hardware one, or is undocked and does not cover the bottom of the collection view.
-            // Note: intersection.maxY may be less than messagesCollectionView.frame.maxY when dealing with undocked keyboards.
-            offset = max(0, additionalBottomInset - automaticallyAddedBottomInset)
-        } else {
-            offset = max(0, intersection.height + 64) /*+ additionalBottomInset - automaticallyAddedBottomInset)*/
-        }
-        
-        let differenceOfBottomInset = offset - messageCollectionViewBottomInset
-        
-        if maintainPositionOnKeyboardFrameChanged {
-            let originOffset = messagesCollectionView.contentOffset
-            let contentOffset = CGPoint(x: messagesCollectionView.contentOffset.x, y: messagesCollectionView.contentOffset.y + differenceOfBottomInset)
-            // Changing contentOffset to bigger number than the contentSize will result in a jump of content
-            // https://github.com/MessageKit/MessageKit/issues/1486
-            guard contentOffset.y <= messagesCollectionView.contentSize.height else {
-                return
-            }
-            if MessagesViewController.originContentOffset == .zero {
-                MessagesViewController.originContentOffset = originOffset
-            }
-            messagesCollectionView.setContentOffset(contentOffset, animated: false)
-        }
+        handleKeyboardChange(keyboardEndFrameInScreenCoords)
     }
     
     private func handleKeyboardChange(_ keyboardFrame: CGRect) {
@@ -159,17 +121,22 @@ internal extension MessagesViewController {
     
     @objc
     private func handleKeyboardWillShow(_ notification: Notification) {
-        maintainPositionOnKeyboardFrameChanged = true
+        guard let userInfo = notification.userInfo,
+              let keyboardFrameEnd = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
+            return
+        }
+
+        let keyboardHeight = keyboardFrameEnd.height
+        let collectionViewBottomInset = keyboardHeight + additionalBottomInset  // Adjust this value if needed
+        
+        messagesCollectionView.contentInset.bottom = collectionViewBottomInset
+        messagesCollectionView.scrollToLastItem()
     }
     
     @objc
     private func handleKeyboardWillHide(_ notification: Notification) {
-        maintainPositionOnKeyboardFrameChanged = false
-        guard MessagesViewController.originContentOffset != .zero else {
-            return
-        }
-        messagesCollectionView.setContentOffset(MessagesViewController.originContentOffset, animated: false)
-        MessagesViewController.originContentOffset = .zero
+        messagesCollectionView.contentInset.bottom = 0
+        messagesCollectionView.scrollToLastItem(animated: true)
     }
 
     // MARK: - Inset Computation
