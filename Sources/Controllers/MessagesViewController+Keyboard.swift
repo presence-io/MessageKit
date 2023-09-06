@@ -94,7 +94,9 @@ internal extension MessagesViewController {
         // to simply check whether the current keyboard frame, whatever it is (even when undocked), covers the bottom of the collection
         // view.
         guard let keyboardEndFrameInScreenCoords = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-        handleKeyboardChange(keyboardEndFrameInScreenCoords)
+        if maintainPositionOnKeyboardFrameChanged {
+            handleKeyboardChange(keyboardEndFrameInScreenCoords)
+        }
     }
     
     private func handleKeyboardChange(_ keyboardFrame: CGRect) {
@@ -135,7 +137,7 @@ internal extension MessagesViewController {
     
     @objc
     private func handleKeyboardWillHide(_ notification: Notification) {
-        messagesCollectionView.contentInset.bottom = 0
+        self.messagesCollectionView.contentInset.bottom = 0
         messagesCollectionView.scrollToLastItem(animated: true)
     }
 
