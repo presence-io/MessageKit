@@ -137,7 +137,7 @@ internal extension MessagesViewController {
     
     @objc
     private func handleKeyboardWillHide(_ notification: Notification) {
-        self.messagesCollectionView.contentInset.bottom = 0
+        self.messagesCollectionView.contentInset.bottom = additionalBottomInset
         messagesCollectionView.scrollToLastItem(animated: true)
     }
 
